@@ -1,5 +1,6 @@
 import requests
 import simplejson as json
+from settings import PARSE_APPLICATION_ID, PARSE_REST_API_KEY
 
 
 class ParseClient(object):
@@ -10,18 +11,15 @@ class ParseClient(object):
     update, and search for objects.
     objects.
 
-    Args:
-        application_id: your Parse application ID
-        rest_api_key: your Parse rest api key
 
     Attributes:
         rest_client: a requests object with the necessary Parse credentials
         url: the base url to use for API requests
     """
 
-    def __init__(self, application_id, rest_api_key):
-        headers = {'X-Parse-Application-Id': application_id,
-                   'X-Parse-REST-API-Key': rest_api_key}
+    def __init__(self):
+        headers = {'X-Parse-Application-Id': PARSE_APPLICATION_ID,
+                   'X-Parse-REST-API-Key': PARSE_REST_API_KEY}
         self.rest_client = requests.session(headers=headers)
         self.url = 'https://api.parse.com/1'
 
