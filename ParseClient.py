@@ -1,6 +1,11 @@
 import requests
 import simplejson as json
-from settings import PARSE_APPLICATION_ID, PARSE_REST_API_KEY
+import settings as s
+from functools import wraps
+
+
+class ParseException(Exception):
+        pass
 
 
 class ParseClient(object):
@@ -18,11 +23,22 @@ class ParseClient(object):
     """
 
     def __init__(self):
-        headers = {'X-Parse-Application-Id': PARSE_APPLICATION_ID,
-                   'X-Parse-REST-API-Key': PARSE_REST_API_KEY}
+        headers = {'X-Parse-Application-Id': s.PARSE_APPLICATION_ID,
+                   'X-Parse-REST-API-Key': s.PARSE_REST_API_KEY}
         self.rest_client = requests.session(headers=headers)
-        self.url = 'https://api.parse.com/1'
+        self.url = s.PARSE_URL
 
+    def raises_parse_error(func):
+        @wraps(func)
+        def checked_for_parse_error(*args, **kwargs):
+            result = func(*args, **kwargs)
+            if result is not None and 'error' in result:
+                raise ParseException(result)
+            else:
+                return result
+        return checked_for_parse_error
+
+    @raises_parse_error
     def create_object(self, object_class, object_attributes):
         url = self._generate_parse_url(object_class)
         headers = {'content-type': 'application/json'}
@@ -30,38 +46,56 @@ class ParseClient(object):
                                          data=json.dumps(object_attributes))
         return response.json
 
-    def get_object(self, object_class, object_id):
+    @raises_parse_error
+    def get_object(self, object_class, object_id, include=None,
+                   login_credentials=None):
         url = self._generate_parse_url(object_class, object_id)
-        response = self.rest_client.get(url)
+        params = {}
+        if login_credentials is not None:
+            params = login_credentials
+        if include is not None:
+            params['include'] = ','.join(include)
+        response = self.rest_client.get(url, params=params)
         return response.json
 
-    def delete_object(self, object_class, object_id):
+    @raises_parse_error
+    def delete_object(self, object_class, object_id, auth=None):
         url = self._generate_parse_url(object_class, object_id)
-        response = self.rest_client.delete(url)
+        headers = ''
+        if auth is not None:
+            headers = {'X-Parse-Session-Token': auth}
+        response = self.rest_client.delete(url, headers=headers)
         deletion_result = (response.status_code == requests.codes.ok)
         return deletion_result
 
+    @raises_parse_error
     def update_object(self, object_class, object_id, object_attributes):
         url = self._generate_parse_url(object_class, object_id)
+        headers = {'content-type': 'application/json'}
         response = self.rest_client.put(url,
+                                        headers=headers,
                                         data=json.dumps(object_attributes))
         return response.json
 
+    @raises_parse_error
     def query_object_class(self, object_class, constraints,
+                           order='',
+                           include=None,
                            first_result_only=False):
+        order = ','.join(order)
         url = self._generate_parse_url(object_class)
-        params = {'where': json.dumps(constraints)}
+        params = {'where': json.dumps(constraints), 'order': order}
+        if include is not None:
+            params['include'] = ','.join(include)
         response = self.rest_client.get(url, params=params)
-        if not response.json['results']:
-            return None
-        elif first_result_only:
+        if first_result_only and response.json['results']:
             return response.json['results'][0]
         else:
-            return response.json['results']
+            return response.json
 
     def _generate_parse_url(self, object_class, object_id=None,):
-        if object_class is 'users':
-            resource_alias = '/'
+        if object_class is 'users' or object_class is 'login':
+            resource_alias = ''
         else:
             resource_alias = '/classes'
         if object_id:
