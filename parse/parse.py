@@ -2,51 +2,11 @@ import requests
 import simplejson as json
 import settings as s
 from functools import wraps
-
-
-class ParseException(Exception):
-        pass
-
-
-def construct_dict_for_relation(object_class, object_id):
-    """
-    Turns an object class and id into the proper format
-    for a Parse relation type
-    """
-    return {'__type': 'Pointer',
-            'className': object_class,
-            'objectId': object_id}
-
-
-def construct_attribute_for_where_relation(object_id, object_class,
-                                           relation_attribute):
-    object_relation = construct_dict_for_relation(object_class,
-                                                  object_id)
-    return {
-        '$relatedTo': {
-            'object': object_relation,
-            'key': relation_attribute
-        }
-    }
-
-
-def construct_add_relation(object_attribute, relation_class,
-                           relation_id, unique=False):
-    object_relation = construct_dict_for_relation(relation_class, relation_id)
-    if unique:
-        op = 'AddUnique'
-    else:
-        op = 'AddRelation'
-    return {
-        object_attribute: {
-            '__op': op,
-            'objects': [object_relation]
-        }
-    }
-
-
-def construct_increment_relation(amount_to_increment):
-    return {'__op': 'Increment', 'amount': amount_to_increment}
+from .queries import (
+    construct_dict_for_relation, construct_attribute_for_where_relation,
+    construct_add_relation, construct_increment_relation
+)
+from .exceptions import ParseException
 
 
 class ParseClient(object):
@@ -63,9 +23,9 @@ class ParseClient(object):
         url: the base url to use for API requests
     """
 
-    def __init__(self):
-        headers = {'X-Parse-Application-Id': s.PARSE_APPLICATION_ID,
-                   'X-Parse-REST-API-Key': s.PARSE_REST_API_KEY}
+    def __init__(self, application_id, rest_api_key):
+        headers = {'X-Parse-Application-Id': application_id,
+                   'X-Parse-REST-API-Key': rest_api_key}
         self.rest_client = requests.session()
         self.rest_client.headers = headers
         self.url = s.PARSE_URL
