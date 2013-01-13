@@ -98,10 +98,11 @@ class ParseClient(object):
 
         url = self._generate_parse_url(object_class)
 
-        order = ','.join(order)
+        order = '' if not order else ','.join(order)
+
         params = {'where': json.dumps(constraints), 'order': order}
-        if include is not None:
-            params['include'] = ','.join(include)
+        params['include'] = '' if not include else ','.join(include)
+
         if count:
             params['count'] = 1
             params['limit'] = 0
