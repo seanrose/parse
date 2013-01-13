@@ -1,5 +1,6 @@
 import requests
 import simplejson as json
+import os
 import settings as s
 from functools import wraps
 from .queries import (
@@ -9,38 +10,62 @@ from .queries import (
 from .exceptions import ParseException
 
 
+def _set_parse_credential_from_env():
+
+    application_id = os.environ.get('PARSE_APPLICATION_ID')
+    rest_api_key = os.environ.get('PARSE_REST_API_KEY')
+
+    if not application_id or not rest_api_key:
+        raise ValueError(
+            """Calling ParseClient() with no arguments requires environment variables to be set like this:
+
+            >>> import os
+            >>> os.environ['PARSE_APPLICATION_ID'] = YOUR_PARSE_APPLICATION_ID
+            >>> os.environ['PARSE_REST_API_KEY'] = YOUR_PARSE_REST_API_KEY
+            """
+        )
+    return application_id, rest_api_key
+
+def raises_parse_error(func):
+    @wraps(func)
+
+    def checked_for_parse_error(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if (
+                result is not None and not isinstance(result, int)
+                and 'error' in result):
+            raise ParseException(result)
+        else:
+            return result
+
+    return checked_for_parse_error
+
+
 class ParseClient(object):
     """A wrapper for interacting with the Parse API
 
-    This class handles interacting with Parse. It handles
-    all of the HTTP requests and can create, retrieve, delete,
-    update, and search for objects.
-    objects.
+    This class holds the credentials of your Parse account.
 
+    Args:
+        application_id: Your Parse Application ID
+        rest_api_key: Your Parse API Key
 
     Attributes:
         rest_client: a requests object with the necessary Parse credentials
         url: the base url to use for API requests
     """
 
-    def __init__(self, application_id, rest_api_key):
+    def __init__(self, application_id=None, rest_api_key=None):
+
+        if not application_id or not rest_api_key:
+            application_id, rest_api_key = _set_parse_credential_from_env()
+
         headers = {'X-Parse-Application-Id': application_id,
                    'X-Parse-REST-API-Key': rest_api_key}
+
         self.rest_client = requests.session()
         self.rest_client.headers = headers
         self.url = s.PARSE_URL
-
-    def raises_parse_error(func):
-        @wraps(func)
-        def checked_for_parse_error(*args, **kwargs):
-            result = func(*args, **kwargs)
-            if (
-                    result is not None and not isinstance(result, int)
-                    and 'error' in result):
-                raise ParseException(result)
-            else:
-                return result
-        return checked_for_parse_error
 
     @raises_parse_error
     def create_object(self, object_class, object_attributes):
