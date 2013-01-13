@@ -1,13 +1,9 @@
 import requests
 import simplejson as json
 import os
-import settings as s
-from functools import wraps
-from .queries import (
-    construct_dict_for_relation, construct_attribute_for_where_relation,
-    construct_add_relation, construct_increment_relation
-)
-from .exceptions import ParseException
+from .exceptions import raises_parse_error
+
+PARSE_URL = 'https://api.parse.com/1'
 
 
 def _set_parse_credential_from_env():
@@ -17,7 +13,8 @@ def _set_parse_credential_from_env():
 
     if not application_id or not rest_api_key:
         raise ValueError(
-            """Calling ParseClient() with no arguments requires environment variables to be set like this:
+            """Calling ParseClient() with no arguments requires environment
+            variables to be set like this:
 
             >>> import os
             >>> os.environ['PARSE_APPLICATION_ID'] = YOUR_PARSE_APPLICATION_ID
@@ -25,20 +22,6 @@ def _set_parse_credential_from_env():
             """
         )
     return application_id, rest_api_key
-
-def raises_parse_error(func):
-    @wraps(func)
-
-    def checked_for_parse_error(*args, **kwargs):
-        result = func(*args, **kwargs)
-        if (
-                result is not None and not isinstance(result, int)
-                and 'error' in result):
-            raise ParseException(result)
-        else:
-            return result
-
-    return checked_for_parse_error
 
 
 class ParseClient(object):
@@ -65,7 +48,7 @@ class ParseClient(object):
 
         self.rest_client = requests.session()
         self.rest_client.headers = headers
-        self.url = s.PARSE_URL
+        self.url = PARSE_URL
 
     @raises_parse_error
     def create_object(self, object_class, object_attributes):
