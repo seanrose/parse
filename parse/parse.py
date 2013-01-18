@@ -24,7 +24,7 @@ def _set_parse_credential_from_env():
     return application_id, rest_api_key
 
 
-def _generate_parse_url(self, object_class, object_id=None,):
+def _generate_parse_url(object_class, object_id=None,):
     """
     Builds the complete Parse URL for making requests
     """
@@ -35,11 +35,11 @@ def _generate_parse_url(self, object_class, object_id=None,):
         resource_alias = '/classes'
 
     if object_id:
-        url = '%s%s/%s/%s' % (self.url, resource_alias,
-                              object_class, object_id)
+        url = '{0}{1}/{2}/{3}'.format(PARSE_URL, resource_alias,
+                                      object_class, object_id)
     else:
-        url = '%s%s/%s' % (self.url, resource_alias,
-                           object_class)
+        url = '{0}{1}/{2}'.format(PARSE_URL, resource_alias,
+                                  object_class)
 
     return url
 
@@ -48,6 +48,8 @@ class ParseClient(object):
     """A wrapper for interacting with the Parse API
 
     This class holds the credentials of your Parse account.
+    Get a Parse Account here:
+    https://parse.com/home/index#signup
 
     Args:
         application_id: Your Parse Application ID
@@ -86,21 +88,23 @@ class ParseClient(object):
 
         response = self.rest_client.post(url, headers=headers,
                                          data=json.dumps(object_attributes))
-        return response.json()
+        return json.loads(response.content)
 
     @raises_parse_error
     def get_object(self, object_class, object_id, include=None,
                    login_credentials=None):
         """
         Retrieves an object based on its ID.
+        https://parse.com/docs/rest#objects-retrieving
 
         Args:
             object_class: String representing the class name
             object_id: String ID of this object
-            inlcude: attribute names of sub-objects to include instead of pointers
+            inlcude: attribute names of sub-objects to include instead of
+                pointers
         """
 
-        url = self._generate_parse_url(object_class, object_id)
+        url = _generate_parse_url(object_class, object_id)
         params = {}
 
         if login_credentials is not None:
@@ -109,17 +113,18 @@ class ParseClient(object):
             params['include'] = ','.join(include)
 
         response = self.rest_client.get(url, params=params)
-        return response.json()
+        return json.loads(response.content)
 
     @raises_parse_error
     def delete_object(self, object_class, object_id, auth=None):
         """
         Attempts to delete an object.
+        https://parse.com/docs/rest#objects-deleting
 
         Returns:
             True if the delete was successful, False if it was not
         """
-        url = self._generate_parse_url(object_class, object_id)
+        url = _generate_parse_url(object_class, object_id)
 
         if auth is not None:
             headers = {'X-Parse-Session-Token': auth}
@@ -134,15 +139,22 @@ class ParseClient(object):
     def update_object(self, object_class, object_id, object_attributes):
         """
         Updates a specific set of attributes for a specific object
+        https://parse.com/docs/rest#objects-updating
+
+        Args:
+            object_class: String representing the class name
+            object_id: the unique ID of this object
+            object_attributes: dict containing the object's attributes
+
         """
 
-        url = self._generate_parse_url(object_class, object_id)
+        url = _generate_parse_url(object_class, object_id)
         headers = {'content-type': 'application/json'}
 
         response = self.rest_client.put(url,
                                         headers=headers,
                                         data=json.dumps(object_attributes))
-        return response.json()
+        return json.loads(response.content)
 
     @raises_parse_error
     def query_object_class(self,
@@ -153,7 +165,7 @@ class ParseClient(object):
                            count=False,
                            first_result_only=False):
 
-        url = self._generate_parse_url(object_class)
+        url = _generate_parse_url(object_class)
 
         order = '' if not order else ','.join(order)
 
@@ -167,11 +179,11 @@ class ParseClient(object):
         response = self.rest_client.get(url, params=params)
         # TODOD: make this suck less
         if count:
-            return response.json()['count']
-        if response.json()['results']:
+            return json.loads(response.content)['count']
+        if json.loads(response.content)['results']:
             if first_result_only:
-                return response.json()['results'][0]
+                return json.loads(response.content)['results'][0]
             else:
-                return response.json()['results']
+                return json.loads(response.content)['results']
         else:
             return None
