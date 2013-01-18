@@ -162,7 +162,7 @@ class ParseClient(object):
                            constraints,
                            order='',
                            include=None,
-                           count_only=False,
+                           count=False,
                            first_result_only=False):
 
         url = _generate_parse_url(object_class)
@@ -172,17 +172,18 @@ class ParseClient(object):
         params = {'where': json.dumps(constraints), 'order': order}
         params['include'] = '' if not include else ','.join(include)
 
-        if count_only:
+        if count:
             params['count'] = 1
             params['limit'] = 0
 
         response = self.rest_client.get(url, params=params)
-        response_json = json.loads(response.content)
-
-        if count_only:
-            return response_json['count']
-
-        if first_result_only:
-            return response_json.get('results', [None])[0]
+        # TODOD: make this suck less
+        if count:
+            return json.loads(response.content)['count']
+        if json.loads(response.content)['results']:
+            if first_result_only:
+                return json.loads(response.content)['results'][0]
+            else:
+                return json.loads(response.content)['results']
         else:
-            return response_json.get('results')
+            return None
