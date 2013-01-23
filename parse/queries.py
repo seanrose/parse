@@ -1,3 +1,4 @@
+from .operation import pointer
 
 
 class Query(object):
@@ -8,17 +9,18 @@ class Query(object):
     have helpers to support all of the relation types Parse has
     """
 
-    def __init__(self, constraints=None, object_class=None):
+    def __init__(self, object_class, constraints=None):
 
         self.constraints = {} if not constraints else constraints
 
-        # Query requires a specific object class
-        if not object_class:
-            raise AttributeError(
-                """Queries must be instantiated with a an object_class e.g.
-                >>> q = Query(object_class='Users')"""
-            )
+    def add_pointer(self, attribute_name, object_class, object_id):
 
-    def add_relation(attribute_name, object_class, object_id):
-        # TODO: implement
-        return
+        self.constraints[attribute_name] = pointer(object_class, object_id)
+
+    def add_relation(self, parent_attribute_name, parent_object_class,
+                     parent_object_id):
+
+        self.constraint['$relatedTo'] = {
+            'object': pointer(parent_object_class, parent_object_id),
+            'key': parent_attribute_name
+        }
