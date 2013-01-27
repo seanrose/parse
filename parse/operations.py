@@ -1,4 +1,4 @@
-def construct_dict_for_relation(object_class, object_id):
+def pointer(object_class, object_id):
     """
     Turns an object class and id into the proper format
     for a Parse relation type
@@ -8,21 +8,9 @@ def construct_dict_for_relation(object_class, object_id):
             'objectId': object_id}
 
 
-def construct_attribute_for_where_relation(object_id, object_class,
-                                           relation_attribute):
-    object_relation = construct_dict_for_relation(object_class,
-                                                  object_id)
-    return {
-        '$relatedTo': {
-            'object': object_relation,
-            'key': relation_attribute
-        }
-    }
-
-
 def construct_add_relation(object_attribute, relation_class,
                            relation_id, unique=False):
-    object_relation = construct_dict_for_relation(relation_class, relation_id)
+    object_relation = pointer(relation_class, relation_id)
     if unique:
         op = 'AddUnique'
     else:

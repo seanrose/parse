@@ -160,10 +160,25 @@ class ParseClient(object):
     def query_object_class(self,
                            object_class,
                            constraints,
-                           order='',
+                           order=None,
                            include=None,
                            count_only=False,
                            first_result_only=False):
+        """
+        Used to execute a parse query.
+        https://parse.com/docs/rest#queries
+
+        Args:
+            object_class: the object class to query
+            constraints: the key/value pairs to search for
+            order: which attribute of the object to sort by
+                (prepend an '-' to sort descending)
+            include: if the object class contains pointers, which
+                pointers to expand to full objects
+            count_only: if true, returns only the count of matching results
+            first_result_only: if true, returns only the first result of the
+                query
+        """
 
         url = _generate_parse_url(object_class)
 

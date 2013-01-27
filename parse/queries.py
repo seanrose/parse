@@ -1,4 +1,4 @@
-from .operation import pointer
+from .operations import pointer
 
 
 class Query(object):
@@ -9,9 +9,11 @@ class Query(object):
     have helpers to support all of the relation types Parse has
     """
 
-    def __init__(self, object_class, constraints=None):
+    def __init__(self, parse_client, object_class, constraints=None):
 
         self.constraints = {} if not constraints else constraints
+        self.object_class = object_class
+        self.parse_client = parse_client
 
     def add_pointer(self, attribute_name, object_class, object_id):
 
@@ -24,3 +26,8 @@ class Query(object):
             'object': pointer(parent_object_class, parent_object_id),
             'key': parent_attribute_name
         }
+
+    def execute(self):
+        """Runs the query"""
+        return self.parse_client.query_object_class(self.object_class,
+                                                    self.constraints)
