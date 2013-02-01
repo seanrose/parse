@@ -13,8 +13,7 @@ __author__ = 'sean rose'
 __license__ = 'Apache 2.0'
 __copyright__ = 'Copyright 2013 sean rose'
 
-from .client import ParseClient
-from .queries import Query
+from .parse import ParseClient
 
 # Set default logging handler to avoid "No handler found" warnings.
 import logging

@@ -2,6 +2,7 @@ import requests
 import simplejson as json
 import os
 from .exceptions import raises_parse_error
+from .queries import Query
 
 PARSE_URL = 'https://api.parse.com/1'
 
@@ -201,3 +202,6 @@ class ParseClient(object):
             return response_json.get('results', [None])[0]
         else:
             return response_json.get('results')
+
+    def create_query(self, object_class, constraints=None):
+        return Query(self, object_class, constraints)
