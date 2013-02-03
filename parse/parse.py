@@ -74,7 +74,7 @@ class ParseClient(object):
         self.url = PARSE_URL
 
     @raises_parse_error
-    def create_object(self, object_class, object_attributes):
+    def create_object(self, object_class, object_attributes={}):
         """
         Creates an object by making a POST request its class
         https://parse.com/docs/rest#objects-creating
@@ -84,7 +84,7 @@ class ParseClient(object):
             object_attributes: dict containing the object's attributes
         """
 
-        url = self._generate_parse_url(object_class)
+        url = _generate_parse_url(object_class)
         headers = {'content-type': 'application/json'}
 
         response = self.rest_client.post(url, headers=headers,
