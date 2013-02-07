@@ -2,7 +2,7 @@ import os
 from ..parse import parse
 from nose import with_setup
 from nose.tools import ok_
-from test_object_schema import TEST_CLASS_NAME
+from test_object_schema import TEST_CLASS_NAME, TEST_CLASS_ATTRIBUTES
 
 
 def dummy_env_setup():
@@ -17,7 +17,7 @@ def test_create_object():
 
     p = parse.ParseClient()
 
-    obj = p.create_object(TEST_CLASS_NAME)
+    obj = p.create_object(TEST_CLASS_NAME, TEST_CLASS_ATTRIBUTES)
 
     ok_(obj, 'Object was not successfully created')
 
@@ -46,7 +46,7 @@ def test_update_object():
     obj = p.query_object_class(TEST_CLASS_NAME, {}, first_result_only=True)
 
     updated_at = p.update_object(TEST_CLASS_NAME, obj['objectId'],
-                                 {'foo': 'bar'})
+                                 TEST_CLASS_ATTRIBUTES)
 
     ok_(updated_at, 'Object was not successfully updated')
 

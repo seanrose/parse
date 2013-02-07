@@ -8,6 +8,10 @@ def pointer(object_class, object_id):
             'objectId': object_id}
 
 
+def operation(relationship, value):
+    return {relationship: value}
+
+
 def construct_add_relation(object_attribute, relation_class,
                            relation_id, unique=False):
     object_relation = pointer(relation_class, relation_id)
